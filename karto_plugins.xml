@@ -1,0 +1,11 @@
+<library path="lib/libkarto_plugins">
+  <class name="open_karto/G2OSolver" type="karto_plugins::G2OSolver" base_class_type="karto::ScanSolver">
+    <description> Plugin for karto slam that uses G2O solver. </description>
+  </class>
+  <class name="open_karto/VertigoMaxMixSolver" type="karto_plugins::VertigoMaxMixSolver" base_class_type="karto::ScanSolver">
+    <description> Plugin for karto slam that uses the Max-mixtures solver from the vertigo/g2o library. </description>
+  </class>
+  <class name="open_karto/VertigoSwitchableSolver" type="karto_plugins::VertigoSwitchableSolver" base_class_type="karto::ScanSolver">
+    <description> Plugin for karto slam that uses the switchable solver from the vertigo/g2o library. </description>
+  </class>
+</library> 
