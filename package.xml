@@ -46,14 +46,16 @@
   <build_depend>slam_karto</build_depend>
   <build_depend>open_karto</build_depend>
   <build_depend>vertigo_slam</build_depend>
+  <build_depend>interactive_markers</build_depend>
   <run_depend>pluginlib</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>eigen</run_depend>
   <run_depend>open_karto</run_depend>
   <run_depend>slam_karto</run_depend>
   <run_depend>vertigo_slam</run_depend>
+  <run_depend>interactive_markers</run_depend>
 
   <export>
-    <open_karto plugin="${prefix}/karto_plugins.xml" />
+    <slam_karto plugin="${prefix}/karto_plugins.xml" />
   </export>
 </package>

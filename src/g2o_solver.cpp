@@ -24,23 +24,29 @@
 
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/types/data/types_data.h>
-//#include <slam_karto/g2o/types/data/robot_laser_sclam.h>
+#include <karto_plugins/calibration/robot_laser_sclam.h>
 
 #include <karto_plugins/g2o_solver.h>
 
-//#include <slam_karto/localized_range_scan_stamped.h>
+#include <karto_plugins/calibration/localized_range_scan_stamped.h>
 #include <tf/tf.h>
 #include <boost/lexical_cast.hpp>
 #include <cstdlib>
 
+#include <pluginlib/class_list_macros.h>
+
 G2O_USE_TYPE_GROUP(data)
 G2O_USE_TYPE_GROUP(slam2d)
-G2O_USE_TYPE_GROUP(calibration)
+//G2O_USE_TYPE_GROUP(calibration)
+
+PLUGINLIB_EXPORT_CLASS(karto_plugins::G2OSolver, karto::SLAMSolver)
+
+namespace karto_plugins {
 
 G2OSolver::G2OSolver()
 {
   ros::NodeHandle nh("~");
-  if(!nh.getParam("g2o_online_optimization",online_optimization_))
+  if(!nh.getParam("/slam_karto/g2o_online_optimization",online_optimization_))
   {
     online_optimization_=false;
     ROS_INFO("Not using online optimization");
@@ -48,7 +54,7 @@ G2OSolver::G2OSolver()
   else
     ROS_INFO("Online optimization set to %s", online_optimization_ ? "true" : "false");
 
-  if(!nh.getParam("g2o_num_iterations",optimization_iterations_))
+  if(!nh.getParam("/slam_karto/g2o_num_iterations",optimization_iterations_))
   {
     optimization_iterations_=30;
     ROS_INFO("Using default number of iterations: %d", optimization_iterations_);
@@ -56,7 +62,24 @@ G2OSolver::G2OSolver()
   else
     ROS_INFO("Using %d g2o iterations", optimization_iterations_);
 
-  calibration_debug_ = false;
+  if(!nh.getParam("/slam_karto/map_frame",map_frame_id_))
+  {
+    map_frame_id_ = "map";
+  }
+  ROS_INFO("Map is being created in the %s frame", map_frame_id_.c_str());
+ 
+  if(!nh.getParam("/slam_karto/use_interactive_switches",use_interactive_switches_))
+  {
+    use_interactive_switches_ = false;
+  }
+  ROS_INFO("Using interactive switches %s", use_interactive_switches_ ? "true" : "false" );
+ 
+  if(!nh.getParam("/slam_karto/calibration_mode",calibration_mode_))
+  {
+    calibration_mode_ = false;
+  }
+  ROS_INFO("Using calibration_mode: %s", calibration_mode_ ? "true" : "false" );
+ 
   optimizer_ = new g2o::SparseOptimizer();
 
   typedef g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >  SlamBlockSolver;
@@ -123,7 +146,7 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     vertex->setFixed(true);
   }
  
-  /*if(calibration_debug_)
+  if(calibration_mode_)
   {
     g2o::RobotLaserSCLAM* rl = new g2o::RobotLaserSCLAM();
     g2o::LaserParameters *lp = new g2o::LaserParameters(1081,-2.2689,0.004363,60);
@@ -139,7 +162,7 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     rl->setTimestamp((double)ts);
     vertex->setUserData(rl);
   }
-*/
+
   optimizer_->addVertex(vertex);
   //TODO Memory management of vertices and edges?
   vertices_.push_back(vertex);
@@ -574,5 +597,5 @@ bool G2OSolver::turnEdgeOff(g2o::OptimizableGraph::Edge* e)
   e->setLevel(1);
 }
 
-
+} // namespace
 

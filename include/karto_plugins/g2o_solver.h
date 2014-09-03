@@ -22,45 +22,47 @@ typedef std::map<edge_pair_t,bool> loop_status_t;
 typedef std::map<edge_pair_t,visualization_msgs::InteractiveMarker> loop_marker_t;
 typedef std::map<edge_pair_t,g2o::OptimizableGraph::Edge *> loop_edge_map_t;
 
-class G2OSolver : public karto::SLAMSolver
-{
-public:
-  G2OSolver();
-  virtual ~G2OSolver();
+namespace karto_plugins {
 
-public:
-  virtual void Clear();
-  virtual void Compute();
-  virtual const karto::ScanSolver::IdPoseVector& GetCorrections() const;
+  class G2OSolver : public karto::SLAMSolver
+  {
+  public:
+    G2OSolver();
+    virtual ~G2OSolver();
 
-  virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex);
-  virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge);
-  virtual void getGraph(std::vector<float> &g);
+  public:
+    virtual void Clear();
+    virtual void Compute();
+    virtual const karto::ScanSolver::IdPoseVector& GetCorrections() const;
 
-  void publishGraphVisualization(visualization_msgs::MarkerArray &marray);
-protected:
-  karto::ScanSolver::IdPoseVector corrections_;
-  g2o::SparseOptimizer* optimizer_;
-  std::vector<g2o::VertexSE2*> vertices_;
+    virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex);
+    virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge);
+    virtual void getGraph(std::vector<float> &g);
 
-  // parameters
-  bool calibration_debug_;
-  bool use_interactive_switches_;
-  bool online_optimization_;
-  int optimization_iterations_;
-  std::string map_frame_id_;
+    void publishGraphVisualization(visualization_msgs::MarkerArray &marray);
+  protected:
+    karto::ScanSolver::IdPoseVector corrections_;
+    g2o::SparseOptimizer* optimizer_;
+    std::vector<g2o::VertexSE2*> vertices_;
 
-  // interactive markers support 
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server_;
-  loop_status_t loop_closure_status_map_;  // keeps track of whether markers are on or off
-  loop_marker_t loop_closure_markers_; // allows access to interactive markers by vertex ids of edge
-  std::map<edge_pair_t,g2o::OptimizableGraph::Edge *> loop_closure_edges_;
-  visualization_msgs::Marker MakeSwitch(visualization_msgs::InteractiveMarker &msg, geometry_msgs::Point &p1, geometry_msgs::Point &p2, bool status);
-  visualization_msgs::Marker MakeEdge(visualization_msgs::InteractiveMarker &msg, geometry_msgs::Point &p1, geometry_msgs::Point &p2, bool status);
-  virtual bool getEdgeStatus(g2o::OptimizableGraph::Edge* edge);
-  void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
-  virtual bool turnEdgeOn(g2o::OptimizableGraph::Edge* e);
-  virtual bool turnEdgeOff(g2o::OptimizableGraph::Edge* e);
+    // parameters
+    bool calibration_mode_;
+    bool use_interactive_switches_;
+    bool online_optimization_;
+    int optimization_iterations_;
+
+    // interactive markers support 
+    boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server_;
+    loop_status_t loop_closure_status_map_;  // keeps track of whether markers are on or off
+    loop_marker_t loop_closure_markers_; // allows access to interactive markers by vertex ids of edge
+    std::map<edge_pair_t,g2o::OptimizableGraph::Edge *> loop_closure_edges_;
+    visualization_msgs::Marker MakeSwitch(visualization_msgs::InteractiveMarker &msg, geometry_msgs::Point &p1, geometry_msgs::Point &p2, bool status);
+    visualization_msgs::Marker MakeEdge(visualization_msgs::InteractiveMarker &msg, geometry_msgs::Point &p1, geometry_msgs::Point &p2, bool status);
+    virtual bool getEdgeStatus(g2o::OptimizableGraph::Edge* edge);
+    void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
+    virtual bool turnEdgeOn(g2o::OptimizableGraph::Edge* e);
+    virtual bool turnEdgeOff(g2o::OptimizableGraph::Edge* e);
+  };
 };
 
 #endif // KARTO_G2OSOLVER_H
