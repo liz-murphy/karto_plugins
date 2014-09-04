@@ -25,19 +25,19 @@
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/types/data/types_data.h>
 #include <karto_plugins/calibration/robot_laser_sclam.h>
-
 #include <karto_plugins/g2o_solver.h>
 
-#include <karto_plugins/calibration/localized_range_scan_stamped.h>
+#include <slam_karto/localized_range_scan_stamped.h>
+
 #include <tf/tf.h>
 #include <boost/lexical_cast.hpp>
 #include <cstdlib>
 
 #include <pluginlib/class_list_macros.h>
 
-G2O_USE_TYPE_GROUP(data)
+//G2O_USE_TYPE_GROUP(data)
 G2O_USE_TYPE_GROUP(slam2d)
-//G2O_USE_TYPE_GROUP(calibration)
+G2O_USE_TYPE_GROUP(calibration)
 
 PLUGINLIB_EXPORT_CLASS(karto_plugins::G2OSolver, karto::SLAMSolver)
 
@@ -127,9 +127,22 @@ void G2OSolver::Compute()
     const g2o::SE2& estimate = vertices_[i]->estimate();
     karto::Pose2 pose(estimate.translation().x(), estimate.translation().y(), estimate.rotation().angle());
     corrections_.push_back(std::make_pair(vertices_[i]->id(), pose));
+
+    if(calibration_mode_)
+    {
+      // Update the user data
+      g2o::RobotLaserSCLAM* data_ptr = static_cast<g2o::RobotLaserSCLAM *>(vertices_[i]->userData());
+      if(data_ptr != NULL)
+      {
+        data_ptr->setCorrectedPose(vertices_[i]->estimate());
+      }
+    }
+
   }
   optimizer_->save("after_optimization.g2o");
   std::cout << "G2OSolver::Compute(): optimization done ..." << std::flush;
+
+
 }
 
 void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
@@ -323,7 +336,7 @@ void G2OSolver::publishGraphVisualization(visualization_msgs::MarkerArray &marra
        {
          // New loop closure edge, need to create an interactive marker for it
          visualization_msgs::InteractiveMarker int_marker;
-         int_marker.header.frame_id = "map_calibrated";
+         int_marker.header.frame_id = map_frame_id_;
          tf::Vector3 position((p2.x-p1.x)/2 + p1.x, (p2.y-p1.y)/2 + p1.y, 0);
          tf::pointTFToMsg(position, int_marker.pose.position);
          int_marker.scale = 1;
@@ -383,95 +396,11 @@ void G2OSolver::publishGraphVisualization(visualization_msgs::MarkerArray &marra
   }  
 }
 
-/* Display the loop closure links */
-/*void G2OSolver::getLoopClosures(visualization_msgs::MarkerArray &marray)
-{
-  edge_data_pt_t::iterator edge_it;
-  int id=0;
- 
-  visualization_msgs::Marker loop_edge;
-  loop_edge.header.frame_id = map_frame_id_;
-  loop_edge.header.stamp = ros::Time::now();
-  loop_edge.action = visualization_msgs::Marker::ADD;
-  loop_edge.ns = "karto";
-  loop_edge.id = 0;
-  loop_edge.type = visualization_msgs::Marker::LINE_STRIP;
-  loop_edge.scale.x = 0.1;
-  loop_edge.scale.y = 0.1;
-  loop_edge.scale.z = 0.1;
-  loop_edge.color.a = 1.0;
-  loop_edge.color.r = 1.0;
-  loop_edge.color.g = 0.0;
-  loop_edge.color.b = 1.0;
- 
-  for(edge_it = active_edges_.begin(); edge_it != active_edges_.end(); ++edge_it)
-  {
-    g2o::VertexSE2* v1, *v2;
-    v1 = dynamic_cast<g2o::VertexSE2 *>(edge_it->second->vertices()[0]);
-    v2 = dynamic_cast<g2o::VertexSE2 *>(edge_it->second->vertices()[1]);
-   
-    geometry_msgs::Point p1, p2;
-    p1.x = v1->estimate()[0];
-    p1.y = v1->estimate()[1];
-    p2.x = v2->estimate()[0];
-    p2.y = v2->estimate()[1];
-
-    if(use_switchable_markers_)
-    {
-      edge_pair_t current_edge = std::make_pair<int,int>(v1->id(),v2->id());
-      loop_status_t::iterator map_iter = loop_closure_status_map_.find(current_edge);
-      if( map_iter == loop_closure_status_map_.end()  )
-      {
-        // New loop closure edge, need to create an interactive marker for it
-        visualization_msgs::InteractiveMarker int_marker;
-        int_marker.header.frame_id = "map_calibrated";
-        tf::Vector3 position((p2.x-p1.x)/2 + p1.x, (p2.y-p1.y)/2 + p1.y, 0);
-        tf::pointTFToMsg(position, int_marker.pose.position);
-        int_marker.scale = 1;
-        int_marker.name = "button_" + boost::lexical_cast<std::string>(v1->id()) + "_" + boost::lexical_cast<std::string>(v2->id());
-        int_marker.description = "Loop closure\n(Left Click to Toggle)";
-        visualization_msgs::InteractiveMarkerControl control;
-        control.interaction_mode = visualization_msgs::InteractiveMarkerControl::BUTTON;
-        control.name = int_marker.name + "_control";
-
-        // Create the display options
-        bool edge_status = getEdgeStatus(edge_it->second);
-        visualization_msgs::Marker edge_marker = MakeEdge(int_marker, p1, p2, edge_status);
-        control.markers.push_back( edge_marker );
-        visualization_msgs::Marker switch_marker = MakeSwitch( int_marker, p1, p2, edge_status );
-        control.markers.push_back( switch_marker );
-        control.always_visible = true;
-        int_marker.controls.push_back(control);
-
-        server_->insert(int_marker);
-        server_->setCallback(int_marker.name, boost::bind(&G2OSolver::processFeedback, this,_1));
-
-        // Save where appropriate ...
-        loop_closure_status_map_.insert( std::make_pair<edge_pair_t,bool>(current_edge,edge_status) );
-        loop_closure_markers_.insert( std::make_pair<edge_pair_t,visualization_msgs::InteractiveMarker>(current_edge,int_marker) );
-      }
-    }
-    else { // normal edges
-      loop_edge.points.clear();
-      loop_edge.points.push_back(p1);
-      loop_edge.points.push_back(p2);
-      loop_edge.id = id++;
-      bool status = getEdgeStatus(edge_it->second);
-      loop_edge.color.a = 1.0;
-      if(!status)
-        loop_edge.color.a = 0.25;
-      marray.markers.push_back(visualization_msgs::Marker(loop_edge));
-    }
- }
-  server_->applyChanges();
-}
-*/
-
 visualization_msgs::Marker G2OSolver::MakeEdge(visualization_msgs::InteractiveMarker &msg, geometry_msgs::Point &p1, geometry_msgs::Point &p2, bool status)
 {
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.header.frame_id = "map_calibrated";
+  marker.header.frame_id = map_frame_id_;
   marker.type = visualization_msgs::Marker::LINE_STRIP;
   marker.scale.x = 0.1;
   marker.scale.y = 0.1;
@@ -492,7 +421,7 @@ visualization_msgs::Marker G2OSolver::MakeSwitch(visualization_msgs::Interactive
 {
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.header.frame_id = "map_calibrated";
+  marker.header.frame_id = map_frame_id_;
   marker.type = visualization_msgs::Marker::CUBE;
   marker.scale.x = 0.45;
   marker.scale.y = 0.45;

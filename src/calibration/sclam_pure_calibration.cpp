@@ -134,6 +134,7 @@ int main(int argc, char** argv)
     return 0;
   }
   cerr << "Read " << numLaserOdom << " laser readings from file" << endl;
+  cerr << "Data queue size" << dataQueue.buffer().size() << endl;
 
   Eigen::Vector3d odomCalib(1., 1., 1.);
   SE2 initialLaserPose;
@@ -150,25 +151,27 @@ int main(int argc, char** argv)
 */
   // adding the measurements
   vector<MotionInformation, Eigen::aligned_allocator<MotionInformation> > motions;
-  {
-    std::map<double, RobotData*>::const_iterator it = dataQueue.buffer().begin();
-    std::map<double, RobotData*>::const_iterator prevIt = it++;
-    for (; it != dataQueue.buffer().end(); ++it) {
-      MotionInformation mi;
-      RobotLaserSCLAM* prevNode = dynamic_cast<RobotLaserSCLAM*>(prevIt->second);
-      RobotLaserSCLAM* curNode = dynamic_cast<RobotLaserSCLAM*>(it->second);
-      mi.laserMotion = prevNode->correctedPose().inverse() * curNode->correctedPose();
-    
-      mi.odomMotion = prevNode->odomPose().inverse() * curNode->odomPose();
-      // get the motion of the robot in that time interval
-      mi.timeInterval = prevNode->timestamp() - curNode->timestamp();
-      prevIt = it;
-      motions.push_back(mi);
-    }
+  
+  std::map<double, RobotData*>::const_iterator it = dataQueue.buffer().begin();
+  std::map<double, RobotData*>::const_iterator prevIt = it++;
+  
+  for (; it != dataQueue.buffer().end(); ++it) {
+    MotionInformation mi;
+    RobotLaserSCLAM* prevNode = dynamic_cast<RobotLaserSCLAM*>(prevIt->second);
+    RobotLaserSCLAM* curNode = dynamic_cast<RobotLaserSCLAM*>(it->second);
+    mi.laserMotion = prevNode->correctedPose().inverse() * curNode->correctedPose();
+  
+    mi.odomMotion = prevNode->odomPose().inverse() * curNode->odomPose();
+    // get the motion of the robot in that time interval
+    mi.timeInterval = prevNode->timestamp() - curNode->timestamp();
+    prevIt = it;
+    motions.push_back(mi);
   }
 
   std::cout << "Motions size: " << motions.size() << "\n";
 
+  if(1)
+  {
     VertexSE2* laserOffset = new VertexSE2;
     laserOffset->setId(Gm2dlIO::ID_LASERPOSE);
     laserOffset->setEstimate(initialLaserPose);
@@ -210,7 +213,7 @@ int main(int argc, char** argv)
     odomCalib = odomParamsVertex->estimate();
     cerr << "Odometry parameters (scaling factors (v_l, v_r, b)): " << odomParamsVertex->estimate().transpose() << endl;
     optimizer.clear();
-
+  }
   // linear least squares for some parameters
   {
     Eigen::MatrixXd A(motions.size(), 2);

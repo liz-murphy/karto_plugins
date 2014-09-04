@@ -67,6 +67,7 @@ namespace g2o {
       else
         data.push_back(atof(tok.c_str()));
     }
+    std::cout << "Read " << data.size() << " elements\n";
     int ind = 0;
     int type = (int)data[ind++];
     double angle = data[ind++];
@@ -104,6 +105,7 @@ namespace g2o {
     _sideSaftyDist = data[ind++];
     _turnAxis = data[ind++];
     _timestamp = data[ind++];
+    std::cout << "Timestamp is " << _timestamp << "\n";
     _hostname = data[ind++];
     _loggerTimestamp = data[ind++];
     return true;

@@ -26,7 +26,7 @@ G2O_USE_TYPE_GROUP(slam2d)
 G2O_USE_TYPE_GROUP(vertigo)
 G2O_USE_TYPE_GROUP(calibration)
 
-PLUGINLIB_EXPORT_CLASS(karto_plugins::VertigoSwitchableSolver, karto::ScanSolver)
+PLUGINLIB_EXPORT_CLASS(karto_plugins::VertigoSwitchableSolver, karto::SLAMSolver)
 
 using karto_plugins::VertigoSwitchableSolver;
 
@@ -159,7 +159,6 @@ void VertigoSwitchableSolver::Compute()
     if(calibration_mode_)
     {
       // Update the user data
-      std::cout << "Data type: " << vertices_[i]->userData()->elementType() << "\n";
       g2o::RobotLaserSCLAM* data_ptr = static_cast<g2o::RobotLaserSCLAM *>(vertices_[i]->userData());
       if(data_ptr != NULL)
       {

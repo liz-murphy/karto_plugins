@@ -18,8 +18,9 @@
 
 G2O_USE_TYPE_GROUP(slam2d)
 G2O_USE_TYPE_GROUP(vertigo)
+G2O_USE_TYPE_GROUP(calibration)
 
-PLUGINLIB_EXPORT_CLASS(karto_plugins::VertigoMaxMixSolver, karto::ScanSolver)
+PLUGINLIB_EXPORT_CLASS(karto_plugins::VertigoMaxMixSolver, karto::SLAMSolver)
 
 using karto_plugins::VertigoMaxMixSolver;
 

@@ -33,7 +33,7 @@
 #include "g2o/core/factory.h"
 
 #include "g2o/types/sclam2d/edge_se2_sensor_calib.h"
-#include "g2o/types/data/robot_laser.h"
+//#include "g2o/types/data/robot_laser.h"
 
 #include "g2o/stuff/string_tools.h"
 
@@ -257,6 +257,7 @@ namespace g2o {
         RobotLaserSCLAM* rl2 = new RobotLaserSCLAM;
         rl2->read(currentLine);
         queue.add(rl2);
+        std::cout << "Added one, queue size now: " << queue.buffer().size() << "\n";
         cnt++;
       }
     }
