@@ -68,7 +68,7 @@ void VertigoSwitchableSolver::AddConstraint(karto::Edge<karto::LocalizedRangeSca
 {
   karto::LocalizedRangeScan* pSource = pEdge->GetSource()->GetObject();
   karto::LocalizedRangeScan* pTarget = pEdge->GetTarget()->GetObject();
-  if(abs(pSource->GetUniqueId() - pTarget->GetUniqueId()) < 20)
+  if(abs(pSource->GetUniqueId() - pTarget->GetUniqueId()) < 70)
   {
     karto::LinkInfo* pLinkInfo = (karto::LinkInfo*)(pEdge->GetLabel());
 

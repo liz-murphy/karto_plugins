@@ -113,9 +113,9 @@ const karto::ScanSolver::IdPoseVector& G2OSolver::GetCorrections() const
 
 void G2OSolver::Compute()
 {
-  std::cout << "G2OSolver::Compute(): saving graph..." << std::flush;
-  optimizer_->save("before_optimization.g2o");
-  std::cout << "done." << std::endl;
+  //std::cout << "G2OSolver::Compute(): saving graph..." << std::flush;
+  //optimizer_->save("before_optimization.g2o");
+  //std::cout << "done." << std::endl;
   std::cout << "G2OSolver::Compute(): running optimizer..." << std::flush;
   corrections_.clear();
 
@@ -139,8 +139,8 @@ void G2OSolver::Compute()
     }
 
   }
-  optimizer_->save("after_optimization.g2o");
-  std::cout << "G2OSolver::Compute(): optimization done ..." << std::flush;
+  //optimizer_->save("after_optimization.g2o");
+  //std::cout << "G2OSolver::Compute(): optimization done ..." << std::flush;
 
 
 }
@@ -303,7 +303,7 @@ void G2OSolver::publishGraphVisualization(visualization_msgs::MarkerArray &marra
     p2.x = v2->estimate()[0];
     p2.y = v2->estimate()[1];
 
-   if( (v2->id() - v1->id()) < 20) // not a loop closure
+   if( (v2->id() - v1->id()) < 70) // not a loop closure
    {
      edge.points.clear();
      edge.points.push_back(p1);
