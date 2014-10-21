@@ -34,22 +34,9 @@ add_library(karto_plugins
    src/vertigo_switchable_solver.cpp
 )
 
-add_library(g2o_calibration ${G2O_LIB_TYPE}
-  src/calibration/gm2dl_io.cpp 
-  src/calibration/edge_se2_pure_calib.cpp 
-  src/calibration/closed_form_calibration.cpp 
-  src/calibration/sclam_helpers.cpp 
-  src/calibration/types_sclam2d.cpp 
-  src/calibration/robot_laser_sclam.cpp)
-
-add_executable(sclam src/calibration/sclam_pure_calibration.cpp)
-
-target_link_libraries(g2o_calibration ${catkin_LIBRARIES} ${CSPARSE_LIBRARY} ${G2O_LIBRARIES})
-target_link_libraries(sclam g2o_calibration)
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(karto_plugins
-  ${catkin_LIBRARIES} ${G2O_LIBRARIES} g2o_calibration
+  ${catkin_LIBRARIES} ${G2O_LIBRARIES} 
  )
 
 ## Mark executables and/or libraries for installation
