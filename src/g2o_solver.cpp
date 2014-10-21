@@ -24,7 +24,7 @@
 
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/types/data/types_data.h>
-#include <karto_plugins/calibration/robot_laser_sclam.h>
+//#include <karto_plugins/calibration/robot_laser_sclam.h>
 #include <karto_plugins/g2o_solver.h>
 
 #include <slam_karto/localized_range_scan_stamped.h>
@@ -37,7 +37,7 @@
 
 //G2O_USE_TYPE_GROUP(data)
 G2O_USE_TYPE_GROUP(slam2d)
-G2O_USE_TYPE_GROUP(calibration)
+//G2O_USE_TYPE_GROUP(calibration)
 
 PLUGINLIB_EXPORT_CLASS(karto_plugins::G2OSolver, karto::SLAMSolver)
 
@@ -128,7 +128,7 @@ void G2OSolver::Compute()
     karto::Pose2 pose(estimate.translation().x(), estimate.translation().y(), estimate.rotation().angle());
     corrections_.push_back(std::make_pair(vertices_[i]->id(), pose));
 
-    if(calibration_mode_)
+    /*if(calibration_mode_)
     {
       // Update the user data
       g2o::RobotLaserSCLAM* data_ptr = static_cast<g2o::RobotLaserSCLAM *>(vertices_[i]->userData());
@@ -136,7 +136,7 @@ void G2OSolver::Compute()
       {
         data_ptr->setCorrectedPose(vertices_[i]->estimate());
       }
-    }
+    }*/
 
   }
   //optimizer_->save("after_optimization.g2o");
@@ -159,7 +159,7 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     vertex->setFixed(true);
   }
  
-  if(calibration_mode_)
+  /*if(calibration_mode_)
   {
     g2o::RobotLaserSCLAM* rl = new g2o::RobotLaserSCLAM();
     g2o::LaserParameters *lp = new g2o::LaserParameters(1081,-2.2689,0.004363,60);
@@ -174,7 +174,7 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     double ts =  static_cast<karto::LocalizedRangeScanStamped *>(pVertex->GetObject())->getTimestamp();
     rl->setTimestamp((double)ts);
     vertex->setUserData(rl);
-  }
+  }*/
 
   optimizer_->addVertex(vertex);
   //TODO Memory management of vertices and edges?
