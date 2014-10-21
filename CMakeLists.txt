@@ -14,8 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen REQUIRED)
-find_package(G2O REQUIRED)
 find_package(SuiteSparse REQUIRED)
+find_package(G2O REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
