@@ -2,8 +2,8 @@
 Changelog for package karto_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2014-10-24)
+------------------
 * More removing calibration dependency
 * Further fixes to remove calibration
 * Use deb version of libg2o
