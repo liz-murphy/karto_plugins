@@ -2,8 +2,8 @@
 Changelog for package karto_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.1 (2014-10-24)
+------------------
 * Install plugin xml
 * Contributors: Jonathan Binney
 
