@@ -2,6 +2,11 @@
 Changelog for package karto_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Install plugin xml
+* Contributors: Jonathan Binney
+
 0.1.0 (2014-10-24)
 ------------------
 * More removing calibration dependency
