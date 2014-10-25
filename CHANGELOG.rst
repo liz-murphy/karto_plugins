@@ -2,6 +2,12 @@
 Changelog for package karto_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Cleanup package.xml
+* karto_plugins depends on cmake_modules
+* Contributors: Jonathan Binney
+
 0.1.1 (2014-10-24)
 ------------------
 * Install plugin xml
