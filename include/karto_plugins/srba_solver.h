@@ -3,10 +3,20 @@
 
 #include <slam_karto/slam_solver.h>
 
-typedef std::pair<int,int> edge_pair_t;
-typedef std::map<edge_pair_t,bool> loop_status_t;
-typedef std::map<edge_pair_t,visualization_msgs::InteractiveMarker> loop_marker_t;
-typedef std::map<edge_pair_t,g2o::OptimizableGraph::Edge *> loop_edge_map_t;
+struct RBA_OPTIONS : public RBA_OPTIONS_DEFAULT
+{
+  //  typedef ecps::local_areas_fixed_size            edge_creation_policy_t;  //!< One of the most important choices: how to construct the relative coordinates graph problem
+  //  typedef options::sensor_pose_on_robot_none      sensor_pose_on_robot_t;  //!< The sensor pose coincides with the robot pose
+  typedef options::observation_noise_constant_matrix<observations::RelativePoses_2D>   obs_noise_matrix_t;      // The sensor noise matrix is the same for all observations and equal to some given matrix
+  //  typedef options::solver_LM_schur_dense_cholesky solver_t;                //!< Solver algorithm (Default: Lev-Marq, with Schur, with dense Cholesky)
+};
+
+typedef RbaEngine<
+  kf2kf_poses::SE2,               // Parameterization  of KF-to-KF poses
+  landmarks::RelativePoses2D,     // Parameterization of landmark positions
+  observations::RelativePoses_2D, // Type of observations
+  RBA_OPTIONS
+  >  srba_t;
 
 namespace karto_plugins {
 
@@ -28,6 +38,7 @@ namespace karto_plugins {
     void publishGraphVisualization(visualization_msgs::MarkerArray &marray);
   protected:
     karto::ScanSolver::IdPoseVector corrections_;
+    srba_t rba_;
 
   };
 };
