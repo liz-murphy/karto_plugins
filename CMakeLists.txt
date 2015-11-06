@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   slam_karto
   vertigo_slam
   interactive_markers
+  srba
 )
 
 find_package(Eigen REQUIRED)
 find_package(SuiteSparse REQUIRED)
 find_package(G2O REQUIRED)
+find_package(MRPT REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -26,12 +28,14 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include
   ${catkin_INCLUDE_DIRS} 
   ${EIGEN_INCLUDE_DIRS} 
-  ${CSPARSE_INCLUDE_DIR})
+  ${CSPARSE_INCLUDE_DIR}
+  ${MRPT_INCLUDE_DIRS})
 
 add_library(karto_plugins
    src/g2o_solver.cpp
    src/vertigo_maxmix_solver.cpp
    src/vertigo_switchable_solver.cpp
+   src/srba_solver.cpp
 )
 
 ## Specify libraries to link a library or executable target against

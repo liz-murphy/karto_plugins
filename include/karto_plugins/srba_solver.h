@@ -1,6 +1,7 @@
 #ifndef KARTO_G2OSOLVER_H
 #define KARTO_G2OSOLVER_H
 
+#include <mrpt/srba.h>
 #include <slam_karto/slam_solver.h>
 
 struct RBA_OPTIONS : public RBA_OPTIONS_DEFAULT
