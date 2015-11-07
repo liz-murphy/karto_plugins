@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen REQUIRED)
 find_package(SuiteSparse REQUIRED)
 find_package(G2O REQUIRED)
-find_package(MRPT REQUIRED)
+find_package(MRPT REQUIRED gui graphs graphslam)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -38,9 +38,15 @@ add_library(karto_plugins
    src/srba_solver.cpp
 )
 
-## Specify libraries to link a library or executable target against
 target_link_libraries(karto_plugins
-  ${catkin_LIBRARIES} ${G2O_LIBRARIES} 
+    ${catkin_LIBRARIES} ${G2O_LIBRARIES} ${MRPT_LIBS} 
+ )
+
+
+add_executable(test_srba test/test_srba.cpp)
+## Specify libraries to link a library or executable target against
+target_link_libraries(test_srba
+    ${catkin_LIBRARIES} ${G2O_LIBRARIES} ${MRPT_LIBS} karto_plugins 
  )
 
 ## Mark executables and/or libraries for installation

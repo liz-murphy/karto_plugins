@@ -8,4 +8,7 @@
   <class type="karto_plugins::VertigoSwitchableSolver" base_class_type="karto::SLAMSolver">
     <description> Plugin for karto slam that uses the switchable solver from the vertigo/g2o library. </description>
   </class>
+  <class type="karto_plugins::SRBASolver" base_class_type="karto::SLAMSolver">
+      <description> Plugin for karto slam that uses the SRBA solver from the MRPT. </description>
+  </class>
 </library> 

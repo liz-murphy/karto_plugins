@@ -1,10 +1,13 @@
-#ifndef KARTO_G2OSOLVER_H
-#define KARTO_G2OSOLVER_H
+#ifndef KARTO_SRBASOLVER_H
+#define KARTO_SRBASOLVER_H
 
-#include <mrpt/srba.h>
+#include <srba/srba.h>
 #include <slam_karto/slam_solver.h>
 
-struct RBA_OPTIONS : public RBA_OPTIONS_DEFAULT
+using namespace srba;
+//using namespace mrpt::utils;
+
+struct RBA_OPTIONS : public srba::RBA_OPTIONS_DEFAULT
 {
   //  typedef ecps::local_areas_fixed_size            edge_creation_policy_t;  //!< One of the most important choices: how to construct the relative coordinates graph problem
   //  typedef options::sensor_pose_on_robot_none      sensor_pose_on_robot_t;  //!< The sensor pose coincides with the robot pose
@@ -40,9 +43,11 @@ namespace karto_plugins {
   protected:
     karto::ScanSolver::IdPoseVector corrections_;
     srba_t rba_;
-
+    srba_t::new_kf_observations_t list_obs_;
+    int last_kf_id_;
+    bool first_edge_;
   };
 };
 
-#endif // KARTO_G2OSOLVER_H
+#endif // KARTO_SRBA_SOLVER_H
 
