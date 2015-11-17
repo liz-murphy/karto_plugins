@@ -22,6 +22,13 @@ typedef RbaEngine<
   RBA_OPTIONS
   >  srba_t;
 
+typedef TRBA_Problem_state<
+  kf2kf_poses::SE2,               // Parameterization  of KF-to-KF poses
+  landmarks::RelativePoses2D,     // Parameterization of landmark positions
+  observations::RelativePoses_2D, // Type of observations
+  RBA_OPTIONS
+  > problem_state_t;
+
 namespace karto_plugins {
 
   class SRBASolver : public karto::SLAMSolver
@@ -44,8 +51,8 @@ namespace karto_plugins {
     karto::ScanSolver::IdPoseVector corrections_;
     srba_t rba_;
     srba_t::new_kf_observations_t list_obs_;
-    int last_kf_id_;
-    bool first_edge_;
+    int curr_kf_id_;
+    bool first_keyframe_;
   };
 };
 
