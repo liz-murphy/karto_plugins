@@ -21,7 +21,6 @@ namespace karto_plugins {
     rba_.parameters.ecp.min_obs_to_loop_closure = 1;
 
     first_keyframe_ = true;
-    first_edge_ = true;
     curr_kf_id_ = 0;
   }
 
@@ -78,8 +77,6 @@ namespace karto_plugins {
   
   void SRBASolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
   {
-  
-    first_edge_ = false;
     // Need to call create_kf2kf_edge here
     srba_t::new_kf_observations_t  list_obs;
     srba_t::new_kf_observation_t obs_field;
@@ -208,6 +205,7 @@ namespace karto_plugins {
         node_text.pose.position.y = p.y()+0.15; 
         marray.markers.push_back(visualization_msgs::Marker(node_text));
         id++;
+
       }
       
       for (srba_t::rba_problem_state_t::k2k_edges_deque_t::const_iterator itEdge = rba_.get_rba_state().k2k_edges.begin();
@@ -314,6 +312,8 @@ namespace karto_plugins {
     //std::cout << "Press any key to continue.\n";
     //win.waitForKey();*/
   }
+    else
+      ROS_INFO("Graph is empty");
   }
   void SRBASolver::getGraph(std::vector<float> &g)
   {

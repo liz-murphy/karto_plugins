@@ -102,7 +102,7 @@ SRBATest::SRBATest() : solver_loader_("slam_karto", "karto::SLAMSolver")
   }
   marker_publisher_ = node_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array",1);
 
-  vis_thread_ = new boost::thread(boost::bind(&SRBATest::visLoop, this, 5.0));
+  vis_thread_ = new boost::thread(boost::bind(&SRBATest::visLoop, this, 1.0));
 }
 
 SRBATest::~SRBATest()
@@ -112,6 +112,7 @@ SRBATest::~SRBATest()
 
   if (vis_thread_)
   {
+    ROS_INFO("Deleting visualization");
     vis_thread_->join();
     delete vis_thread_;
   }
@@ -126,7 +127,6 @@ void SRBATest::publishGraphVisualization()
 
 void SRBATest::visLoop(double vis_publish_period)
 {
-  ROS_INFO("Publishing graph");
   if(vis_publish_period == 0)
     return;
 
@@ -203,14 +203,12 @@ void SRBATest::processDataSet()
       obsIdx++; // Next dataset entry
     }
   }
-  
+  publishGraphVisualization();
 }
 
 int main(int argc, char**argv)
 {
   ros::init(argc, argv, "test_srba");
-
-  ros::NodeHandle n;
 
   SRBATest test;
   test.processDataSet();
