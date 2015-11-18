@@ -42,6 +42,10 @@ target_link_libraries(karto_plugins
     ${catkin_LIBRARIES} ${G2O_LIBRARIES} ${MRPT_LIBS} 
  )
 
+add_executable(test_srba test/srba_test.cpp)
+target_link_libraries(test_srba
+    ${catkin_LIBRARIES} ${MRPT_LIBS} 
+)
 
 ## Mark executables and/or libraries for installation
 install(TARGETS karto_plugins 

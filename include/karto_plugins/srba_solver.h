@@ -53,6 +53,7 @@ namespace karto_plugins {
     srba_t::new_kf_observations_t list_obs_;
     int curr_kf_id_;
     bool first_keyframe_;
+    bool first_edge_;
   };
 };
 
