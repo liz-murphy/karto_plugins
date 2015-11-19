@@ -157,6 +157,18 @@ void SRBATest::processDataSet()
   const size_t nObs = sizeof(dataset)/sizeof(dataset[0]);
   size_t cur_kf = 0; // Start at keyframe #0 in the dataset
 
+  // Add the first node
+  karto::RangeReadingsVector empty;
+  karto::Name laser_name("laser");
+  karto::LocalizedRangeScan scan(laser_name, empty);
+  scan.SetUniqueId(dataset[0].current_kf); 
+  karto::Vertex<karto::LocalizedRangeScan> vertex(&scan);
+
+  std::cout << "Adding node: " << cur_kf << "\n";
+  solver_->AddNode(&vertex);
+  std::cout << "Node added\n";
+ 
+  cur_kf = 1; 
   for (size_t obsIdx = 0; obsIdx<nObs;  cur_kf++ /* move to next KF */  )
   {
     std::cout << "ObsIdx: " << obsIdx << " cur_kf: " << cur_kf << "\n";
@@ -166,10 +178,10 @@ void SRBATest::processDataSet()
       karto::RangeReadingsVector empty;
       karto::Name laser_name("laser");
       karto::LocalizedRangeScan scan(laser_name, empty);
-      scan.SetUniqueId(cur_kf); 
+      scan.SetUniqueId(dataset[obsIdx].current_kf); 
       karto::Vertex<karto::LocalizedRangeScan> vertex(&scan);
 
-      std::cout << "Adding node: " << cur_kf << "\n";
+      std::cout << "Adding node: " << dataset[obsIdx].current_kf << "\n";
       solver_->AddNode(&vertex);
       std::cout << "Node added\n";
     }
@@ -178,17 +190,18 @@ void SRBATest::processDataSet()
     // -----------------------------------------------------------------
     while ( dataset[obsIdx].current_kf == cur_kf && obsIdx<nObs )
     {
-      std::cout << "Adding observations for " << cur_kf << "\n";
+      std::cout << "Adding observations for " << dataset[obsIdx].current_kf << "\n";
       karto::RangeReadingsVector empty;
       karto::Name laser_name("laser");
       karto::LocalizedRangeScan scan(laser_name, empty);
-      scan.SetUniqueId(cur_kf); 
+      scan.SetUniqueId(dataset[obsIdx].current_kf); 
       karto::Vertex<karto::LocalizedRangeScan> vSource(&scan);
 
       karto::LocalizedRangeScan scan2(laser_name, empty);
       scan2.SetUniqueId(dataset[obsIdx].observed_kf); 
       karto::Vertex<karto::LocalizedRangeScan> vTarget(&scan2);
 
+      std::cout << "Adding edge: " << vSource.GetObject()->GetUniqueId() << " --> " << vTarget.GetObject()->GetUniqueId() << "\n";
       karto::Edge<karto::LocalizedRangeScan> edge(&vSource, &vTarget);
 
       karto::Pose2 p1(0,0,0);
@@ -203,7 +216,6 @@ void SRBATest::processDataSet()
       obsIdx++; // Next dataset entry
     }
   }
-  publishGraphVisualization();
 }
 
 int main(int argc, char**argv)

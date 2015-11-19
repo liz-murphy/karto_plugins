@@ -17,7 +17,7 @@ namespace karto_plugins {
   // =========== Topology parameters ===========
     rba_.parameters.srba.max_tree_depth       = 3;
     rba_.parameters.srba.max_optimize_depth   = 3;
-    rba_.parameters.ecp.submap_size          = 5;
+    //rba_.parameters.ecp.submap_size          = 5;
     rba_.parameters.ecp.min_obs_to_loop_closure = 1;
 
     first_keyframe_ = true;
@@ -44,7 +44,33 @@ namespace karto_plugins {
     // Do nothing here?
   }
 
+
   void SRBASolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
+  {
+    ROS_INFO("Adding node: %d", pVertex->GetObject()->GetUniqueId());
+    srba_t::new_kf_observations_t  list_obs;
+    srba_t::new_kf_observation_t obs_field;
+    obs_field.is_fixed = true;
+    obs_field.obs.feat_id = pVertex->GetObject()->GetUniqueId();// Feature ID == keyframe ID
+    obs_field.obs.obs_data.x = 0;   // Landmark values are actually ignored.
+    obs_field.obs.obs_data.y = 0;
+    obs_field.obs.obs_data.yaw = 0;
+    list_obs.push_back( obs_field );
+    
+    // Add the last keyframe
+    srba_t::TNewKeyFrameInfo new_kf_info;
+    rba_.define_new_keyframe(
+      list_obs,      // Input observations for the new KF
+      new_kf_info,   // Output info
+      true // Also run local optimization?
+    );
+
+    ROS_ASSERT(new_kf_info.kf_id == pVertex->GetObject()->GetUniqueId());
+    ROS_INFO("Added node: %d with self observation %d", new_kf_info.kf_id, list_obs[0].obs.feat_id);
+    curr_kf_id_ = new_kf_info.kf_id;
+  }
+
+  /*void SRBASolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
   { 
     //srba_t::new_kf_observations_t  list_obs;
     srba_t::new_kf_observation_t obs_field;
@@ -73,9 +99,8 @@ namespace karto_plugins {
     curr_kf_id_ = pVertex->GetObject()->GetUniqueId();
     list_obs_.clear();
 
-  }
-  
-  void SRBASolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
+  }*/
+  /*void SRBASolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
   {
     // Need to call create_kf2kf_edge here
     srba_t::new_kf_observations_t  list_obs;
@@ -108,13 +133,100 @@ namespace karto_plugins {
 
     ROS_INFO("Adding edge between %d and %d", curr_kf_id_, pTarget->GetUniqueId());
     ROS_INFO("%f, %f, %f", diff.GetX(), diff.GetY(), diff.GetHeading());
+  }*/
+  void SRBASolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
+  {
+    ROS_INFO("Adding constraint");
+    // Need to call create_kf2kf_edge here
+    srba_t::new_kf_observations_t  list_obs;
+    srba_t::new_kf_observation_t obs_field;
+    obs_field.is_fixed = false;   // "Landmarks" (relative poses) have unknown relative positions (i.e. treat them as unknowns to be estimated)
+    obs_field.is_unknown_with_init_val = false; // Ignored, since all observed "fake landmarks" already have an initialized value.
+
+    karto::LocalizedRangeScan* pSource = pEdge->GetSource()->GetObject();
+    karto::LocalizedRangeScan* pTarget = pEdge->GetTarget()->GetObject();
+
+    bool reverse_edge = false;
+    if(pSource->GetUniqueId() < pTarget->GetUniqueId())
+      reverse_edge = true;
+
+    ROS_INFO("Adding constraint from %d to %d", pSource->GetUniqueId(), pTarget->GetUniqueId());
+    
+    karto::LinkInfo* pLinkInfo = (karto::LinkInfo*)(pEdge->GetLabel());
+
+    karto::Pose2 diff = pLinkInfo->GetPoseDifference();
+
+    karto::Matrix3 precisionMatrix = pLinkInfo->GetCovariance().Inverse();
+    Eigen::Matrix<double,3,3> m;
+    m(0,0) = precisionMatrix(0,0);
+    m(0,1) = m(1,0) = precisionMatrix(0,1);
+    m(0,2) = m(2,0) = precisionMatrix(0,2);
+    m(1,1) = precisionMatrix(1,1);
+    m(1,2) = m(2,1) = precisionMatrix(1,2);
+    m(2,2) = precisionMatrix(2,2);
+
+    if(reverse_edge)
+    {
+      obs_field.obs.feat_id      = pSource->GetUniqueId();  // Is this right??
+      obs_field.obs.obs_data.x   = -diff.GetX();
+      obs_field.obs.obs_data.y   = -diff.GetY();
+      obs_field.obs.obs_data.yaw = -diff.GetHeading();
+    }
+    else
+    {
+      obs_field.obs.feat_id      = pTarget->GetUniqueId();  // Is this right??
+      obs_field.obs.obs_data.x   = diff.GetX();
+      obs_field.obs.obs_data.y   = diff.GetY();
+      obs_field.obs.obs_data.yaw = diff.GetHeading();
+    }
+
+    list_obs.push_back( obs_field );
+
+    std::vector<srba::TNewEdgeInfo> new_edge_ids;
+
+    if(reverse_edge)
+    {
+      rba_.determine_kf2kf_edges_to_create(pTarget->GetUniqueId(),
+        list_obs,
+        new_edge_ids);
+
+      rba_.add_observation(pTarget->GetUniqueId(), obs_field.obs, NULL, NULL ); 
+    }
+    else
+    { 
+      rba_.determine_kf2kf_edges_to_create(pSource->GetUniqueId(),
+        list_obs,
+        new_edge_ids);
+
+       rba_.add_observation(pSource->GetUniqueId(), obs_field.obs, NULL, NULL ); 
+    }
   }
 
+  void SRBASolver::getActiveIds(std::vector<int> &ids)
+  {
+    if(!rba_.get_rba_state().keyframes.empty())
+    {
+      srba_t::frameid2pose_map_t  spantree;
+      if(curr_kf_id_ == 0)
+        return;
+      
+      TKeyFrameID root_keyframe(curr_kf_id_-1);
+      rba_.create_complete_spanning_tree(root_keyframe,spantree, 30);
+
+      int id = 0;
+      for (srba_t::frameid2pose_map_t::const_iterator itP = spantree.begin();itP!=spantree.end();++itP)
+      {
+        ids.push_back(itP->first);
+      }
+    }
+  }
+  
   void SRBASolver::publishGraphVisualization(visualization_msgs::MarkerArray &marray)
   { 
+    ROS_INFO("Visualizing");
     // Vertices are round, red spheres
     visualization_msgs::Marker m;
-    m.header.frame_id = "/map";
+    m.header.frame_id = "/relative_map";
     m.header.stamp = ros::Time::now();
     m.id = 0;
     m.ns = "karto";
@@ -133,7 +245,7 @@ namespace karto_plugins {
 
     // Odometry edges are opaque blue line strips 
     visualization_msgs::Marker edge;
-    edge.header.frame_id = "/map";
+    edge.header.frame_id = "/relative_map";
     edge.header.stamp = ros::Time::now();
     edge.action = visualization_msgs::Marker::ADD;
     edge.ns = "karto";
@@ -149,7 +261,7 @@ namespace karto_plugins {
   
     // Loop edges are purple, opacity depends on backend state
     visualization_msgs::Marker loop_edge;
-    loop_edge.header.frame_id = "/map";
+    loop_edge.header.frame_id = "/relative_map";
     loop_edge.header.stamp = ros::Time::now();
     loop_edge.action = visualization_msgs::Marker::ADD;
     loop_edge.ns = "spanning_tree";
@@ -164,7 +276,7 @@ namespace karto_plugins {
     loop_edge.color.b = 1.0;
    
     visualization_msgs::Marker node_text;
-    node_text.header.frame_id = "/map";
+    node_text.header.frame_id = "/relative_map";
     node_text.header.stamp = ros::Time::now();
     node_text.action = visualization_msgs::Marker::ADD;
     node_text.ns = "karto";
@@ -182,8 +294,10 @@ namespace karto_plugins {
       //  starting (root) at the given keyframe:
       
       srba_t::frameid2pose_map_t  spantree;
+      if(curr_kf_id_ == 0)
+        return;
       TKeyFrameID root_keyframe(curr_kf_id_-1);
-      rba_.create_complete_spanning_tree(root_keyframe,spantree, 3);
+      rba_.create_complete_spanning_tree(root_keyframe,spantree, 30);
 
       int id = 0;
       for (srba_t::frameid2pose_map_t::const_iterator itP = spantree.begin();itP!=spantree.end();++itP)
