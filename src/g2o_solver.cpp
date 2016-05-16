@@ -137,9 +137,8 @@ void G2OSolver::Compute()
         data_ptr->setCorrectedPose(vertices_[i]->estimate());
       }
     }
-
   }
-  optimizer_->save("after_optimization.g2o");
+  optimizer_->save("data.g2o");
   std::cout << "G2OSolver::Compute(): optimization done ..." << std::flush;
 
 
@@ -174,6 +173,7 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     double ts =  static_cast<karto::LocalizedRangeScanStamped *>(pVertex->GetObject())->getTimestamp();
     rl->setTimestamp((double)ts);
     vertex->setUserData(rl);
+    optimizer_->save("graph.g2o");
   }
 
   optimizer_->addVertex(vertex);

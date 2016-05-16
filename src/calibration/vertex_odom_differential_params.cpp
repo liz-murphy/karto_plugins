@@ -24,29 +24,25 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "g2o/config.h"
-
 #include <karto_plugins/calibration/vertex_odom_differential_params.h>
-
-#include <karto_plugins/calibration/edge_se2_sensor_calib.h>
-#include <karto_plugins/calibration/edge_se2_odom_differential_calib.h>
-
-#include "g2o/core/factory.h"
-
-#include "g2o/stuff/macros.h"
 
 namespace g2o {
 
-  G2O_USE_TYPE_GROUP(slam2d);
-  
-  G2O_REGISTER_TYPE_GROUP(sclam);
-  G2O_REGISTER_TYPE(VERTEX_ODOM_DIFFERENTIAL, VertexOdomDifferentialParams);
-  G2O_REGISTER_TYPE(EDGE_SE2_CALIB, EdgeSE2SensorCalib);
-  G2O_REGISTER_TYPE(EDGE_SE2_ODOM_DIFFERENTIAL_CALIB, EdgeSE2OdomDifferentialCalib);
+  VertexOdomDifferentialParams::VertexOdomDifferentialParams() :
+    BaseVertex <3, Vector3D>()
+  {
+  }
 
-#ifdef G2O_HAVE_OPENGL
-  G2O_REGISTER_ACTION(EdgeSE2SensorCalibDrawAction);
-  G2O_REGISTER_ACTION(EdgeSE2OdomDifferentialCalibDrawAction);
-#endif
+  bool VertexOdomDifferentialParams::read(std::istream& is)
+  {
+    is >> _estimate(0) >> _estimate(1) >> _estimate(2);
+    return true;
+  }
 
-} // end namespace
+  bool VertexOdomDifferentialParams::write(std::ostream& os) const
+  {
+    os << estimate()(0) << " " << estimate()(1) << " " << estimate()(2);
+    return os.good();
+  }
+
+}

@@ -24,29 +24,32 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "g2o/config.h"
+#ifndef G2O_VERTEX_ODOM_DIFFERENTIAL_PARAMS_H
+#define G2O_VERTEX_ODOM_DIFFERENTIAL_PARAMS_H
 
-#include <karto_plugins/calibration/vertex_odom_differential_params.h>
-
-#include <karto_plugins/calibration/edge_se2_sensor_calib.h>
-#include <karto_plugins/calibration/edge_se2_odom_differential_calib.h>
-
-#include "g2o/core/factory.h"
-
-#include "g2o/stuff/macros.h"
+#include <karto_plugins/calibration/g2o_types_sclam2d_api.h>
+#include <karto_plugins/calibration/eigen_types.h>
+#include "g2o/core/base_vertex.h"
 
 namespace g2o {
 
-  G2O_USE_TYPE_GROUP(slam2d);
-  
-  G2O_REGISTER_TYPE_GROUP(sclam);
-  G2O_REGISTER_TYPE(VERTEX_ODOM_DIFFERENTIAL, VertexOdomDifferentialParams);
-  G2O_REGISTER_TYPE(EDGE_SE2_CALIB, EdgeSE2SensorCalib);
-  G2O_REGISTER_TYPE(EDGE_SE2_ODOM_DIFFERENTIAL_CALIB, EdgeSE2OdomDifferentialCalib);
+  class G2O_TYPES_SCLAM2D_API VertexOdomDifferentialParams: public BaseVertex <3, Vector3D> {
+    public:
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+      VertexOdomDifferentialParams();
+      virtual void setToOriginImpl() {
+        _estimate << 1. , 1., 1.;
+      }
 
-#ifdef G2O_HAVE_OPENGL
-  G2O_REGISTER_ACTION(EdgeSE2SensorCalibDrawAction);
-  G2O_REGISTER_ACTION(EdgeSE2OdomDifferentialCalibDrawAction);
+      virtual void oplusImpl(const double* v) {
+        for (int i=0; i<3; i++)
+          _estimate(i) += v[i];
+      }
+
+      virtual bool read(std::istream& is);
+      virtual bool write(std::ostream& os) const;
+  };
+
+}
+
 #endif
-
-} // end namespace

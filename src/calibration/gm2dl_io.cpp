@@ -25,15 +25,15 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <karto_plugins/calibration/gm2dl_io.h>
-#include <karto_plugins/calibration/robot_laser_sclam.h>
 
 #include "g2o/types/data/data_queue.h"
 
 #include "g2o/core/sparse_optimizer.h"
+#include "g2o/core/optimizable_graph.h"
 #include "g2o/core/factory.h"
 
 #include "g2o/types/sclam2d/edge_se2_sensor_calib.h"
-//#include "g2o/types/data/robot_laser.h"
+#include "g2o/types/data/robot_laser.h"
 
 #include "g2o/stuff/string_tools.h"
 
@@ -173,7 +173,6 @@ namespace g2o {
       fout << "VERTEX2 " << v->id() << " ";
       v->write(fout);
       fout << endl;
-      //HyperGraph::Data* data = v->userData();
       OptimizableGraph::Data* data = v->userData();
       if (data) { // writing the data via the factory
         string tag = factory->tag(data);
@@ -253,11 +252,10 @@ namespace g2o {
         break;
       string tag;
       currentLine >> tag;
-      if (tag == "ROBOT_LASER_SCLAM") {
-        RobotLaserSCLAM* rl2 = new RobotLaserSCLAM;
+      if (tag == "ROBOTLASER1") {
+        RobotLaser* rl2 = new RobotLaser;
         rl2->read(currentLine);
         queue.add(rl2);
-        std::cout << "Added one, queue size now: " << queue.buffer().size() << "\n";
         cnt++;
       }
     }
