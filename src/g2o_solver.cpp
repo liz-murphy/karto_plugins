@@ -24,7 +24,6 @@
 
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/types/data/types_data.h>
-#include <karto_plugins/calibration/robot_laser_sclam.h>
 #include <karto_plugins/g2o_solver.h>
 
 #include <slam_karto/localized_range_scan_stamped.h>
@@ -35,9 +34,9 @@
 
 #include <pluginlib/class_list_macros.h>
 
-//G2O_USE_TYPE_GROUP(data)
+G2O_USE_TYPE_GROUP(data)
 G2O_USE_TYPE_GROUP(slam2d)
-G2O_USE_TYPE_GROUP(calibration)
+//G2O_USE_TYPE_GROUP(calibration)
 
 PLUGINLIB_EXPORT_CLASS(karto_plugins::G2OSolver, karto::SLAMSolver)
 
@@ -127,16 +126,6 @@ void G2OSolver::Compute()
     const g2o::SE2& estimate = vertices_[i]->estimate();
     karto::Pose2 pose(estimate.translation().x(), estimate.translation().y(), estimate.rotation().angle());
     corrections_.push_back(std::make_pair(vertices_[i]->id(), pose));
-
-    if(calibration_mode_)
-    {
-      // Update the user data
-      g2o::RobotLaserSCLAM* data_ptr = static_cast<g2o::RobotLaserSCLAM *>(vertices_[i]->userData());
-      if(data_ptr != NULL)
-      {
-        data_ptr->setCorrectedPose(vertices_[i]->estimate());
-      }
-    }
   }
   optimizer_->save("data.g2o");
   std::cout << "G2OSolver::Compute(): optimization done ..." << std::flush;
@@ -160,12 +149,16 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
  
   if(calibration_mode_)
   {
-    g2o::RobotLaserSCLAM* rl = new g2o::RobotLaserSCLAM();
-    g2o::LaserParameters *lp = new g2o::LaserParameters(1081,-2.2689,0.004363,60);
+    g2o::RobotLaser* rl = new g2o::RobotLaser();
+    // beams, first beam angle, angular step, max range
+    g2o::LaserParameters *lp = new g2o::LaserParameters(811,-2.35619,0.0057596,25);
     std::vector<double> readings(pVertex->GetObject()->GetRangeReadings(), pVertex->GetObject()->GetRangeReadings()+pVertex->GetObject()->GetNumberOfRangeReadings());
     rl->setRanges(readings);
+    rl->setHostname("hostname");
+    rl->setTimestamp(pVertex->GetObject()->GetTime());
+    rl->setLoggerTimestamp(pVertex->GetObject()->GetTime());
     readings.clear();
-    rl->setRemissions(readings);
+    //rl->setRemissions(readings);
     karto::Pose2 odomPose = pVertex->GetObject()->GetOdometricPose();
     g2o::SE2 pOdom(odomPose.GetX(), odomPose.GetY(), odomPose.GetHeading());
     rl->setOdomPose(pOdom);

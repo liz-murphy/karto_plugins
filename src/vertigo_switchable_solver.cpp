@@ -12,7 +12,6 @@
 
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <karto_plugins/vertigo_switchable_solver.h>
-#include <karto_plugins/calibration/robot_laser_sclam.h>
 #include <stdlib.h>
 
 //#include <slam_karto/g2o/types/data/robot_laser_sclam.h>
@@ -24,7 +23,7 @@
 
 G2O_USE_TYPE_GROUP(slam2d)
 G2O_USE_TYPE_GROUP(vertigo)
-G2O_USE_TYPE_GROUP(calibration)
+//G2O_USE_TYPE_GROUP(calibration)
 
 PLUGINLIB_EXPORT_CLASS(karto_plugins::VertigoSwitchableSolver, karto::SLAMSolver)
 
@@ -155,16 +154,6 @@ void VertigoSwitchableSolver::Compute()
     const g2o::SE2& estimate = vertices_[i]->estimate();
     karto::Pose2 pose(estimate.translation().x(), estimate.translation().y(), estimate.rotation().angle());
     corrections_.push_back(std::make_pair(vertices_[i]->id(), pose));
- 
-    if(calibration_mode_)
-    {
-      // Update the user data
-      g2o::RobotLaserSCLAM* data_ptr = static_cast<g2o::RobotLaserSCLAM *>(vertices_[i]->userData());
-      if(data_ptr != NULL)
-      {
-        data_ptr->setCorrectedPose(vertices_[i]->estimate());
-      }
-    }
   }
   
   std::cout << "done." << std::endl;
