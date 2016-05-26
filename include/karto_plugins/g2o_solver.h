@@ -40,7 +40,6 @@ namespace karto_plugins {
     virtual void getGraph(std::vector<float> &g);
 
     void publishGraphVisualization(visualization_msgs::MarkerArray &marray);
-    void AddOdom(const nav_msgs::Odometry::ConstPtr& odom);
 
   protected:
     karto::ScanSolver::IdPoseVector corrections_;

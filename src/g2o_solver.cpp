@@ -152,13 +152,15 @@ void G2OSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
     g2o::RobotLaser* rl = new g2o::RobotLaser();
     // beams, first beam angle, angular step, max range
     g2o::LaserParameters *lp = new g2o::LaserParameters(811,-2.35619,0.0057596,25);
+    //g2o::SE2 pLaser(0.15, 0, -M_PI);
+    g2o::SE2 pLaser(0.0, 0.0, 0.0);
+    lp->laserPose = pLaser;
     std::vector<double> readings(pVertex->GetObject()->GetRangeReadings(), pVertex->GetObject()->GetRangeReadings()+pVertex->GetObject()->GetNumberOfRangeReadings());
     rl->setRanges(readings);
     rl->setHostname("hostname");
     rl->setTimestamp(pVertex->GetObject()->GetTime());
     rl->setLoggerTimestamp(pVertex->GetObject()->GetTime());
     readings.clear();
-    //rl->setRemissions(readings);
     karto::Pose2 odomPose = pVertex->GetObject()->GetOdometricPose();
     g2o::SE2 pOdom(odomPose.GetX(), odomPose.GetY(), odomPose.GetHeading());
     rl->setOdomPose(pOdom);

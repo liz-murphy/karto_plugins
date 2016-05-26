@@ -34,6 +34,7 @@
 
 #include "g2o/types/sclam2d/edge_se2_sensor_calib.h"
 #include "g2o/types/data/robot_laser.h"
+#include "g2o/types/data/laser_parameters.h"
 
 #include "g2o/stuff/string_tools.h"
 
@@ -145,10 +146,60 @@ namespace g2o {
       } else if (tag == "ROBOTLASER1") {
         if (previousVertex) {
           RobotLaser* rl2 = new RobotLaser;
-          rl2->read(currentLine);
+
+          int type;
+          double angle, fov, res, maxrange, acc;
+          int remission_mode;
+          currentLine >> type >> angle >> fov >> res >> maxrange >> acc >> remission_mode;
+          
+          int beams;
+          currentLine >> beams;
+          LaserParameters laser_params(type, beams, angle, res, maxrange, acc, remission_mode);      
+
+          std::vector<double> ranges, remissions;
+          string data;
+ 
+          ranges.resize(beams);
+          for (int i=0; i<beams; i++)
+          {
+            currentLine >> data;
+            ranges[i] = atof(data.c_str());
+          }
+
+          rl2->setRanges(ranges);
+
+          currentLine >> beams;
+          remissions.resize(beams);
+          for (int i = 0; i < beams; i++)
+            currentLine >> remissions[i];
+      
+          rl2->setRemissions(remissions);
+
+          // special robot laser stuff
+          double x,y,theta;
+          currentLine >> x >> y >> theta;
+          SE2 lp(x,y,theta);
+          currentLine >> x >> y >> theta;
+          SE2 odomPose(x,y,theta);
+          laser_params.laserPose = odomPose.inverse()*lp;
+
+          rl2->setLaserParams(laser_params);
+
+          double laserTv, laserRv, forwardSafetyDist, sideSafetyDist, turnAxis;
+          // Do nothing
+          currentLine >> laserTv >>  laserRv >>  forwardSafetyDist >> sideSafetyDist >> turnAxis;
+
+          double timestamp, loggerTimestamp;
+          string hostname;
+          // timestamp + host
+          currentLine >> timestamp >> hostname >> loggerTimestamp;
+          rl2->setTimestamp(timestamp);
+          rl2->setHostname(hostname);
+          rl2->setLoggerTimestamp(loggerTimestamp);
+
           if (! laserOffsetInitDone) {
             laserOffsetInitDone = true;
-            //cerr << "g2o Laseroffset is " << rl2->laserParams().laserPose.toVector().transpose() << endl;
+            cerr << "g2o Laseroffset is " << rl2->laserParams().laserPose.toVector().transpose() << endl;
             laserOffset->setEstimate(rl2->laserParams().laserPose);
           }
           previousVertex->setUserData(rl2);
