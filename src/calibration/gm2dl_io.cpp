@@ -25,15 +25,15 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <karto_plugins/calibration/gm2dl_io.h>
-#include <karto_plugins/calibration/robot_laser_sclam.h>
 
 #include "g2o/types/data/data_queue.h"
 
 #include "g2o/core/sparse_optimizer.h"
+#include "g2o/core/optimizable_graph.h"
 #include "g2o/core/factory.h"
 
 #include "g2o/types/sclam2d/edge_se2_sensor_calib.h"
-//#include "g2o/types/data/robot_laser.h"
+#include "g2o/types/data/robot_laser.h"
 
 #include "g2o/stuff/string_tools.h"
 
@@ -145,17 +145,62 @@ namespace g2o {
       } else if (tag == "ROBOTLASER1") {
         if (previousVertex) {
           RobotLaser* rl2 = new RobotLaser;
-          rl2->read(currentLine);
-          if (! laserOffsetInitDone) {
-            laserOffsetInitDone = true;
-            //cerr << "g2o Laseroffset is " << rl2->laserParams().laserPose.toVector().transpose() << endl;
-            laserOffset->setEstimate(rl2->laserParams().laserPose);
+        int type;
+        double angle, fov, res, maxrange, acc;
+        int remission_mode;
+        currentLine >> type >> angle >> fov >> res >> maxrange >> acc >> remission_mode;
+
+        int beams;
+        currentLine >> beams;
+        LaserParameters laserParams(type, beams, angle, res, maxrange, acc, remission_mode);      
+        std::vector<double> ranges, remissions;
+        ranges.resize(beams);
+        string tmp;
+        for (int i=0; i<beams; ++i)
+        {
+          currentLine >> tmp;
+          ranges[i] = atof(tmp.c_str());
+        }
+        rl2->setRanges(ranges);
+        
+        currentLine >> beams;
+        remissions.resize(beams);
+        for (int i = 0; i < beams; i++)
+          currentLine >> remissions[i];
+
+        rl2->setRemissions(remissions);
+        // special robot laser stuff
+        double x,y,theta;
+        currentLine >> x >> y >> theta;
+        SE2 lp(x,y,theta);
+        currentLine >> x >> y >> theta;
+        SE2 odomPose(x,y,theta);
+        laserParams.laserPose = odomPose.inverse()*lp;
+        rl2->setLaserParams(laserParams);
+      
+        double laserTv, laserRv, forwardSafetyDist, sideSafetyDist, turnAxis, timestamp, loggerTimestamp; 
+        // Do nothing with this for now 
+        currentLine >> laserTv >>  laserRv >>  forwardSafetyDist >> sideSafetyDist >> turnAxis;
+
+        std::string hostname;
+
+        // timestamp + host
+        currentLine >> timestamp;
+        rl2->setTimestamp(timestamp);
+        currentLine >> hostname;
+        currentLine >> loggerTimestamp;
+        rl2->setLoggerTimestamp(loggerTimestamp);
+
+            if (! laserOffsetInitDone) {
+              laserOffsetInitDone = true;
+              //cerr << "g2o Laseroffset is " << rl2->laserParams().laserPose.toVector().transpose() << endl;
+              laserOffset->setEstimate(rl2->laserParams().laserPose);
+            }
+            previousVertex->setUserData(rl2);
+            previousVertex = 0;
           }
-          previousVertex->setUserData(rl2);
-          previousVertex = 0;
         }
       }
-    }
 
     return true;
   }
@@ -173,7 +218,6 @@ namespace g2o {
       fout << "VERTEX2 " << v->id() << " ";
       v->write(fout);
       fout << endl;
-      //HyperGraph::Data* data = v->userData();
       OptimizableGraph::Data* data = v->userData();
       if (data) { // writing the data via the factory
         string tag = factory->tag(data);
@@ -253,11 +297,10 @@ namespace g2o {
         break;
       string tag;
       currentLine >> tag;
-      if (tag == "ROBOT_LASER_SCLAM") {
-        RobotLaserSCLAM* rl2 = new RobotLaserSCLAM;
+      if (tag == "ROBOTLASER1") {
+        RobotLaser* rl2 = new RobotLaser;
         rl2->read(currentLine);
         queue.add(rl2);
-        std::cout << "Added one, queue size now: " << queue.buffer().size() << "\n";
         cnt++;
       }
     }

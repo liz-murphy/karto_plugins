@@ -34,6 +34,26 @@ add_library(karto_plugins
    src/vertigo_switchable_solver.cpp
 )
 
+add_library(g2o_calibration ${G2O_LIB_TYPE}
+  src/calibration/gm2dl_io.cpp 
+  src/calibration/edge_se2_pure_calib.cpp 
+  src/calibration/closed_form_calibration.cpp 
+  src/calibration/sclam_helpers.cpp 
+  src/calibration/vertex_odom_differential_params.cpp
+  src/calibration/edge_se2_odom_differential_calib.cpp
+  src/calibration/edge_se2_sensor_calib.cpp
+  src/calibration/odometry_measurement.cpp
+  src/calibration/types_sclam2d.cpp)
+
+add_executable(sclam_pure_calibration src/calibration/sclam_pure_calibration.cpp)
+add_executable(sclam_odom_laser src/calibration/sclam_odom_laser.cpp)
+add_executable(sclam_laser_calib src/calibration/sclam_laser_calib.cpp)
+
+target_link_libraries(g2o_calibration ${catkin_LIBRARIES} ${CSPARSE_LIBRARY} ${G2O_LIBRARIES})
+target_link_libraries(sclam_pure_calibration g2o_calibration)
+target_link_libraries(sclam_odom_laser g2o_calibration)
+target_link_libraries(sclam_laser_calib g2o_calibration)
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(karto_plugins
   ${catkin_LIBRARIES} ${G2O_LIBRARIES} 
@@ -44,6 +64,6 @@ install(TARGETS karto_plugins
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(FILES karto_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+install(TARGETS sclam_pure_calibration sclam_odom_laser sclam_laser_calib
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
